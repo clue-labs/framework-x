@@ -349,6 +349,298 @@ class ContainerTest extends TestCase
         $this->assertEquals('{"name":"ADMIN"}', (string) $response->getBody());
     }
 
+    /** @dataProvider provideCastToString */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresStringVariableCastedFromOtherType($value, string $expected)
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (string $value) {
+                return (object) ['name' => $value];
+            },
+            'value' => $value
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":"' . $expected . '"}', (string) $response->getBody());
+    }
+
+    public function provideCastToString()
+    {
+        return [
+            [
+                0,
+                '0'
+            ],
+            [
+                42,
+                '42'
+            ],
+            [
+                1.5,
+                '1.5'
+            ],
+            [
+                1.0,
+                '1.0'
+            ],
+            [
+                0.0,
+                '0.0'
+            ],
+            [
+                true,
+                'true'
+            ],
+            [
+                false,
+                'false'
+            ]
+        ];
+    }
+
+    /** @dataProvider provideCastToInt */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresIntVariableCastedFromOtherType($value, int $expected)
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (int $value) {
+                return (object) ['name' => $value];
+            },
+            'value' => $value
+            ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":' . $expected . '}', (string) $response->getBody());
+    }
+
+    public function provideCastToInt()
+    {
+        return [
+            [
+                '0',
+                0
+            ],
+            [
+                '1',
+                1
+            ],
+            [
+                1.0,
+                1
+            ],
+            [
+                0.0,
+                0
+            ],
+            [
+                true,
+                1
+            ],
+            [
+                false,
+                0
+            ]
+        ];
+    }
+
+    /** @dataProvider provideCastToFloat */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresFloatVariableCastedFromOtherType($value, float $expected)
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (float $value) {
+                return (object) ['name' => $value];
+            },
+            'value' => $value
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":' . $expected . '}', (string) $response->getBody());
+    }
+
+    public function provideCastToFloat()
+    {
+        return [
+            [
+                '0',
+                0.0
+            ],
+            [
+                '1',
+                1.0
+            ],
+            [
+                '1.0',
+                1.0
+            ],
+            [
+                '1.5',
+                1.5
+            ],
+            [
+                0,
+                0.0
+            ],
+            [
+                42,
+                42.0
+            ],
+            [
+                true,
+                1.0
+            ],
+            [
+                false,
+                0.0
+            ]
+        ];
+    }
+
+    /** @dataProvider provideCastToBool */
+    public function testCallableReturnsCallableForClassNameWithDependencyMappedWithFactoryThatRequiresBoolVariableCastedFromOtherType($value, bool $expected)
+    {
+        $request = new ServerRequest('GET', 'http://example.com/');
+
+        $controller = new class(new \stdClass()) {
+            private $data;
+
+            public function __construct(\stdClass $data)
+            {
+                $this->data = $data;
+            }
+
+            public function __invoke(ServerRequestInterface $request)
+            {
+                return new Response(200, [], json_encode($this->data));
+            }
+        };
+
+        $container = new Container([
+            \stdClass::class => function (bool $value) {
+                return (object) ['name' => $value];
+            },
+            'value' => $value
+        ]);
+
+        $callable = $container->callable(get_class($controller));
+        $this->assertInstanceOf(\Closure::class, $callable);
+
+        $response = $callable($request);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"name":' . ($expected ? 'true' : 'false') . '}', (string) $response->getBody());
+    }
+
+    public function provideCastToBool()
+    {
+        return [
+            [
+                0,
+                false
+            ],
+            [
+                'false',
+                false
+            ],
+            [
+                'off',
+                false
+            ],
+            [
+                'no',
+                false
+            ],
+            [
+                '0',
+                false
+            ],
+            [
+                '',
+                false
+            ],
+            [
+                1,
+                true
+            ],
+            [
+                'true',
+                true
+            ],
+            [
+                'on',
+                true
+            ],
+            [
+                'yes',
+                true
+            ],
+            [
+                '1',
+                true
+            ]
+        ];
+    }
+
     public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesUnknownVariable()
     {
         $request = new ServerRequest('GET', 'http://example.com/');
@@ -478,7 +770,8 @@ class ContainerTest extends TestCase
         $callable($request);
     }
 
-    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesStringVariableMappedFromFactoryWithReturnsUnexpectedInteger()
+    /** @dataProvider provideCastToIntFails */
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesIntVariableMappedFromFactoryWithReturnsUnexpectedType($value, string $type)
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -497,20 +790,51 @@ class ContainerTest extends TestCase
         };
 
         $container = new Container([
-            \stdClass::class => function (string $http) {
-                return (object) ['name' => $http];
+            \stdClass::class => function (int $value) {
+                return (object) ['value' => $value];
             },
-            'http' => 1
+            'value' => $value
         ]);
 
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type string, but got integer');
+        $this->expectExceptionMessage('Container variable $value expected type int, but got ' . $type);
         $callable($request);
     }
 
-    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesIntVariableMappedFromFactoryWithReturnsUnexpectedString()
+    public function provideCastToIntFails()
+    {
+        return [
+            [
+                'foo',
+                'string'
+            ],
+            [
+                '00',
+                'string'
+            ],
+            [
+                ' 0',
+                'string'
+            ],
+            [
+                '0 ',
+                'string'
+            ],
+            [
+                1.1,
+                'double'
+            ],
+            [
+                '1.1',
+                'string'
+            ]
+        ];
+    }
+
+    /** @dataProvider provideCastToFloatFails */
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesFloatVariableMappedFromFactoryWithReturnsUnexpectedType($value)
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -529,20 +853,39 @@ class ContainerTest extends TestCase
         };
 
         $container = new Container([
-            \stdClass::class => function (int $http) {
-                return (object) ['name' => $http];
+            \stdClass::class => function (float $value) {
+                return (object) ['value' => $value];
             },
-            'http' => '1.1'
+            'value' => $value
         ]);
 
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $http expected type int, but got string');
+        $this->expectExceptionMessage('Container variable $value expected type float, but got string');
         $callable($request);
     }
 
-    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesFloatVariableMappedFromFactoryWithReturnsUnexpectedString()
+    public function provideCastToFloatFails()
+    {
+        return [
+            [
+                'foo'
+            ],
+            [
+                '00'
+            ],
+            [
+                ' 0'
+            ],
+            [
+                '0 '
+            ]
+        ];
+    }
+
+    /** @dataProvider provideCastToBoolFails */
+    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesBoolVariableMappedFromFactoryWithReturnsUnexpectedType($value, string $type)
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -561,49 +904,51 @@ class ContainerTest extends TestCase
         };
 
         $container = new Container([
-            \stdClass::class => function (float $percent) {
-                return (object) ['percent' => $percent];
+            \stdClass::class => function (bool $value) {
+                return (object) ['value' => $value];
             },
-            'percent' => '100%'
+            'value' => $value
         ]);
 
         $callable = $container->callable(get_class($controller));
 
         $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $percent expected type float, but got string');
+        $this->expectExceptionMessage('Container variable $value expected type bool, but got ' . $type);
         $callable($request);
     }
 
-    public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesBoolVariableMappedFromFactoryWithReturnsUnexpectedString()
+    public function provideCastToBoolFails()
     {
-        $request = new ServerRequest('GET', 'http://example.com/');
-
-        $controller = new class(new \stdClass()) {
-            private $data;
-
-            public function __construct(\stdClass $data)
-            {
-                $this->data = $data;
-            }
-
-            public function __invoke(ServerRequestInterface $request)
-            {
-                return new Response(200, [], json_encode($this->data));
-            }
-        };
-
-        $container = new Container([
-            \stdClass::class => function (bool $admin) {
-                return (object) ['admin' => $admin];
-            },
-            'admin' => 'Yes'
-        ]);
-
-        $callable = $container->callable(get_class($controller));
-
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage('Container variable $admin expected type bool, but got string');
-        $callable($request);
+        return [
+            [
+                'foo',
+                'string'
+            ],
+            [
+                '00',
+                'string'
+            ],
+            [
+                ' 0',
+                'string'
+            ],
+            [
+                '0 ',
+                'string'
+            ],
+            [
+                42,
+                'integer'
+            ],
+            [
+                0.0,
+                'double'
+            ],
+            [
+                1.0,
+                'double'
+            ]
+        ];
     }
 
     public function testCallableReturnsCallableThatThrowsWhenFactoryReferencesClassNameButGetsStringVariable()

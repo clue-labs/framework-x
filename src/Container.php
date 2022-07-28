@@ -277,6 +277,18 @@ class Container
             throw new \BadMethodCallException('Container variable $' . $name . ' expected scalar type, but got ' . (\is_object($value) ? \get_class($value) : \gettype($value)));
         }
 
+        if ($type === 'string' && !\is_string($value)) {
+            $value = \json_encode($value, \JSON_PRESERVE_ZERO_FRACTION);
+        } elseif ($type === 'int' && (\is_bool($value) || !\is_int($value) && (string) (int) $value === (string) $value)) {
+            $value = (int) $value;
+        } elseif ($type === 'float' && (!\is_string($value) || \json_encode((float) $value) === $value || \json_encode((float) $value, \JSON_PRESERVE_ZERO_FRACTION) === $value)) {
+            $value = (float) $value;
+        } elseif ($type === 'bool' && ($value === 0 || \is_string($value) && \in_array(\strtolower($value), ['false', '0', 'no', 'off', ''], true))) {
+            $value = false;
+        } elseif ($type === 'bool' && ($value === 1 || \is_string($value) && \in_array(\strtolower($value), ['true', '1', 'yes', 'on'], true))) {
+            $value = true;
+        }
+
         if (($type === 'string' && !\is_string($value)) || ($type === 'int' && !\is_int($value)) || ($type === 'float' && !\is_float($value)) || ($type === 'bool' && !\is_bool($value))) {
             throw new \BadMethodCallException('Container variable $' . $name . ' expected type ' . $type . ', but got ' . \gettype($value));
         }
