@@ -425,81 +425,28 @@ class AppMiddlewareTest extends TestCase
         $this->assertStringContainsString("<p>Expected request handler to return <code>Psr\Http\Message\ResponseInterface</code> but got uncaught <code>RuntimeException</code> with message <code>Foo</code> in <code title=\"See " . __FILE__ . " line $line\">AppMiddlewareTest.php:$line</code>.</p>\n", (string) $response->getBody());
     }
 
-    public function testGlobalMiddlewareCallsNextReturnsResponseFromController()
+    public function provideGlobalMiddleware()
     {
-        $app = $this->createAppWithoutLogger(function (ServerRequestInterface $request, callable $next) {
+        yield [function (ServerRequestInterface $request, callable $next) {
             return $next($request);
-        });
+        }];
 
-        $app->get('/', function () {
-            return new Response(
-                200,
-                [
-                    'Content-Type' => 'text/html'
-                ],
-                "OK\n"
-            );
-        });
-
-        $request = new ServerRequest('GET', 'http://localhost/');
-
-        // $response = $app->handleRequest($request);
-        $ref = new \ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("OK\n", (string) $response->getBody());
-    }
-
-    public function testGlobalMiddlewareInstanceCallsNextReturnsResponseFromController()
-    {
-        $middleware = new class {
+        yield [$middleware = new class {
             public function __invoke(ServerRequestInterface $request, callable $next)
             {
                 return $next($request);
             }
-        };
+        }];
 
+        yield [get_class($middleware)];
+    }
+
+    /**
+     * @dataProvider provideGlobalMiddleware
+     */
+    public function testGlobalMiddlewareCallsNextReturnsResponseFromController($middleware)
+    {
         $app = $this->createAppWithoutLogger($middleware);
-
-        $app->get('/', function () {
-            return new Response(
-                200,
-                [
-                    'Content-Type' => 'text/html'
-                ],
-                "OK\n"
-            );
-        });
-
-        $request = new ServerRequest('GET', 'http://localhost/');
-
-        // $response = $app->handleRequest($request);
-        $ref = new \ReflectionMethod($app, 'handleRequest');
-        $ref->setAccessible(true);
-        $response = $ref->invoke($app, $request);
-
-        /** @var ResponseInterface $response */
-        $this->assertInstanceOf(ResponseInterface::class, $response);
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
-        $this->assertEquals("OK\n", (string) $response->getBody());
-    }
-
-    public function testGlobalMiddlewareClassNameCallsNextReturnsResponseFromController()
-    {
-        $middleware = new class {
-            public function __invoke(ServerRequestInterface $request, callable $next)
-            {
-                return $next($request);
-            }
-        };
-
-        $app = $this->createAppWithoutLogger(get_class($middleware));
 
         $app->get('/', function () {
             return new Response(
