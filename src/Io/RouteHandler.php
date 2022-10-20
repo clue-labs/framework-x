@@ -11,6 +11,7 @@ use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use React\Promise\PromiseInterface;
 
@@ -41,8 +42,8 @@ class RouteHandler
     /**
      * @param string[] $methods
      * @param string $route
-     * @param callable|RequestHandlerInterface|class-string $handler
-     * @param callable|RequestHandlerInterface|class-string ...$handlers
+     * @param callable|MiddlewareInterface|RequestHandlerInterface|class-string $handler
+     * @param callable|MiddlewareInterface|RequestHandlerInterface|class-string ...$handlers
      */
     public function map(array $methods, string $route, $handler, ...$handlers): void
     {
@@ -61,7 +62,7 @@ class RouteHandler
                 unset($handlers[$i]);
             } elseif ($handler instanceof AccessLogHandler || $handler === AccessLogHandler::class) {
                 throw new \TypeError('AccessLogHandler may currently only be passed as a global middleware');
-            } elseif (!$handler instanceof RequestHandlerInterface && !\is_callable($handler)) {
+            } elseif (!$handler instanceof RequestHandlerInterface && !$handler instanceof MiddlewareInterface && !\is_callable($handler)) {
                 $handlers[$i] = $container->callable($handler);
             }
         }

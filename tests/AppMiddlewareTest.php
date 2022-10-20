@@ -9,6 +9,7 @@ use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use React\Http\Message\ServerRequest;
 use React\Http\Message\Response;
@@ -435,6 +436,15 @@ class AppMiddlewareTest extends TestCase
             public function __invoke(ServerRequestInterface $request, callable $next)
             {
                 return $next($request);
+            }
+        }];
+
+        yield [get_class($middleware)];
+
+        yield [$middleware = new class implements MiddlewareInterface {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
+            {
+                return $next->handle($request);
             }
         }];
 

@@ -2,8 +2,12 @@
 
 namespace FrameworkX\Io;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use React\Promise\PromiseInterface;
+use function React\Async\await;
 
 /**
  * @internal
@@ -26,6 +30,27 @@ class MiddlewareHandler
             } elseif ($handler instanceof RequestHandlerInterface) {
                 $this->handlers[] = function (ServerRequestInterface $request) use ($handler) {
                     return $handler->handle($request);
+                };
+            } elseif ($handler instanceof MiddlewareInterface) {
+                $this->handlers[] = function (ServerRequestInterface $request, callable $next) use ($handler): ResponseInterface {
+                    return $handler->process($request, new class($next) implements RequestHandlerInterface {
+                        private $next;
+                        public function __construct(callable $next)
+                        {
+                            $this->next = $next;
+                        }
+
+                        public function handle(ServerRequestInterface $request): ResponseInterface
+                        {
+                            $response = ($this->next)($request);
+
+                            if ($response instanceof PromiseInterface) {
+                                $response = await($response);
+                            }
+
+                            return $response;
+                        }
+                    });
                 };
             } else {
                 throw new \TypeError();

@@ -4,7 +4,10 @@ namespace FrameworkX;
 
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Http\Message\ResponseInterface;
+use React\Promise\PromiseInterface;
 
 /**
  * @final
@@ -79,6 +82,25 @@ class Container
 
             if ($handler instanceof RequestHandlerInterface) {
                 return $handler->handle($request);
+            } elseif ($handler instanceof MiddlewareInterface) {
+                return $handler->process($request, new class($next) implements RequestHandlerInterface {
+                    private $next;
+                    public function __construct(callable $next)
+                    {
+                        $this->next = $next;
+                    }
+
+                    public function handle(ServerRequestInterface $request): ResponseInterface
+                    {
+                        $response = ($this->next)($request);
+
+                        if ($response instanceof PromiseInterface) {
+                            $response = await($response);
+                        }
+
+                        return $response;
+                    }
+                });
             }
 
             // Check `$handler` references a class name that is callable, i.e. has an `__invoke()` method.
