@@ -11,6 +11,7 @@ use FrameworkX\Container;
 use FrameworkX\ErrorHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use React\Promise\PromiseInterface;
 
 /**
@@ -40,8 +41,8 @@ class RouteHandler
     /**
      * @param string[] $methods
      * @param string $route
-     * @param callable|class-string $handler
-     * @param callable|class-string ...$handlers
+     * @param callable|RequestHandlerInterface|class-string $handler
+     * @param callable|RequestHandlerInterface|class-string ...$handlers
      */
     public function map(array $methods, string $route, $handler, ...$handlers): void
     {
@@ -60,7 +61,7 @@ class RouteHandler
                 unset($handlers[$i]);
             } elseif ($handler instanceof AccessLogHandler || $handler === AccessLogHandler::class) {
                 throw new \TypeError('AccessLogHandler may currently only be passed as a global middleware');
-            } elseif (!\is_callable($handler)) {
+            } elseif (!$handler instanceof RequestHandlerInterface && !\is_callable($handler)) {
                 $handlers[$i] = $container->callable($handler);
             }
         }
@@ -91,13 +92,15 @@ class RouteHandler
                 return $this->errorHandler->requestMethodNotAllowed($routeInfo[1]);
             case \FastRoute\Dispatcher::FOUND:
                 $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
+                assert(\is_callable($handler) || $handler instanceof RequestHandlerInterface);
 
+                $vars = $routeInfo[2];
+                assert(\is_array($handler));
                 foreach ($vars as $key => $value) {
                     $request = $request->withAttribute($key, rawurldecode($value));
                 }
 
-                return $handler($request);
+                return $handler instanceof RequestHandlerInterface ? $handler->handle($request) : $handler($request);
         }
     } // @codeCoverageIgnore
 }

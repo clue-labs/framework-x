@@ -9,6 +9,7 @@ use FrameworkX\Io\RouteHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use React\Http\Message\ServerRequest;
 use React\Http\Message\Response;
 use React\Promise\PromiseInterface;
@@ -632,6 +633,158 @@ class AppMiddlewareTest extends TestCase
                 "OK\n"
             );
         });
+
+        $called = false;
+        $app->get('/', function () use (&$called) {
+            $called = true;
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+
+        $this->assertFalse($called);
+    }
+
+    public function testGlobalMiddlewareClassInstanceReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
+    {
+        $handler = new class {
+            public function __invoke()
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app = $this->createAppWithoutLogger($handler);
+
+        $called = false;
+        $app->get('/', function () use (&$called) {
+            $called = true;
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+
+        $this->assertFalse($called);
+    }
+
+    public function testGlobalMiddlewareClassNameReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
+    {
+        $handler = new class {
+            public function __invoke()
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app = $this->createAppWithoutLogger(get_class($handler));
+
+        $called = false;
+        $app->get('/', function () use (&$called) {
+            $called = true;
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+
+        $this->assertFalse($called);
+    }
+
+    public function testGlobalMiddlewarePsr15ClassInstanceReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
+    {
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app = $this->createAppWithoutLogger($handler);
+
+        $called = false;
+        $app->get('/', function () use (&$called) {
+            $called = true;
+        });
+
+        $request = new ServerRequest('GET', 'http://localhost/');
+
+        // $response = $app->handleRequest($request);
+        $ref = new \ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+
+        $this->assertFalse($called);
+    }
+
+    public function testGlobalMiddlewarePsr15ClassNameReturnsResponseWithoutCallingNextReturnsResponseWithoutCallingRouter()
+    {
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app = $this->createAppWithoutLogger(get_class($handler));
 
         $called = false;
         $app->get('/', function () use (&$called) {

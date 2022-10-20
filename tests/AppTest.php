@@ -35,6 +35,8 @@ use ReflectionProperty;
 use function React\Async\await;
 use function React\Promise\reject;
 use function React\Promise\resolve;
+use React\Http\Io\RequestHeaderParser;
+use Psr\Http\Server\RequestHandlerInterface;
 
 class AppTest extends TestCase
 {
@@ -1117,6 +1119,138 @@ class AppTest extends TestCase
                 "OK\n"
             );
         });
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandlerClassInstance()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $handler = new class {
+            public function __invoke()
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app->get('/users', $handler);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandlerClassName()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $handler = new class {
+            public function __invoke()
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app->get('/users', get_class($handler));
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandlerClassInstancePsr15()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app->get('/users', $handler);
+
+        $request = new ServerRequest('GET', 'http://localhost/users');
+
+        // $response = $app->handleRequest($request);
+        $ref = new ReflectionMethod($app, 'handleRequest');
+        $ref->setAccessible(true);
+        $response = $ref->invoke($app, $request);
+
+        /** @var ResponseInterface $response */
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals("OK\n", (string) $response->getBody());
+    }
+
+    public function testHandleRequestWithMatchingRouteReturnsResponseFromMatchingRouteHandlerClassNamePsr15()
+    {
+        $app = $this->createAppWithoutLogger();
+
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(
+                    200,
+                    [
+                        'Content-Type' => 'text/html'
+                    ],
+                    "OK\n"
+                );
+            }
+        };
+
+        $app->get('/users', get_class($handler));
 
         $request = new ServerRequest('GET', 'http://localhost/users');
 
