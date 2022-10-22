@@ -2,6 +2,7 @@
 
 namespace FrameworkX\Io;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -9,8 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class MiddlewareHandler
 {
+    /** @var list<callable> $handlers */
     private $handlers;
 
+    /** @param list<callable> $handlers */
     public function __construct(array $handlers)
     {
         assert(count($handlers) >= 2);
@@ -18,11 +21,13 @@ class MiddlewareHandler
         $this->handlers = $handlers;
     }
 
+    /** @return ResponseInterface|\React\Promise\PromiseInterface<ResponseInterface>|\Generator */
     public function __invoke(ServerRequestInterface $request)
     {
         return $this->call($request, 0);
     }
 
+    /** @return ResponseInterface|\React\Promise\PromiseInterface<ResponseInterface>|\Generator */
     private function call(ServerRequestInterface $request, int $position)
     {
         if (!isset($this->handlers[$position + 2])) {

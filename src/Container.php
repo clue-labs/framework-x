@@ -3,6 +3,7 @@
 namespace FrameworkX;
 
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -34,6 +35,7 @@ class Container
         $this->container = $loader;
     }
 
+    /** @return ResponseInterface|\React\Promise\PromiseInterface<ResponseInterface>|\Generator */
     public function __invoke(ServerRequestInterface $request, callable $next = null)
     {
         if ($next === null) {
@@ -152,6 +154,7 @@ class Container
                     throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                 }
 
+                // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                 $value = $this->loadObject($this->container[$name], $depth - 1);
                 if (!$value instanceof $name) {
                     throw new \BadMethodCallException('Factory for ' . $name . ' returned unexpected ' . (is_object($value) ? get_class($value) : gettype($value)));
@@ -171,6 +174,7 @@ class Container
                         throw new \BadMethodCallException('Factory for ' . $name . ' is recursive');
                     }
 
+                    // @phpstan-ignore-next-line because type of container value is explicitly checked after getting here
                     $value = $this->loadObject($value, $depth - 1);
                 }
                 if (!$value instanceof $name) {
@@ -213,7 +217,10 @@ class Container
         return $this->container[$name] = $params === [] ? new $name() : $class->newInstance(...$params);
     }
 
-    /** @throws \BadMethodCallException if either parameter can not be loaded */
+    /**
+     * @return list<mixed>
+     * @throws \BadMethodCallException if either parameter can not be loaded
+     */
     private function loadFunctionParams(\ReflectionFunctionAbstract $function, int $depth, bool $allowVariables): array
     {
         $params = [];
@@ -276,6 +283,7 @@ class Container
             throw new \BadMethodCallException(self::parameterError($parameter) . ' is recursive');
         }
 
+        // @phpstan-ignore-next-line because `$type->getName()` is a `class-string` by definition
         return $this->loadObject($type->getName(), $depth - 1);
     }
 
