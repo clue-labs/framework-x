@@ -42,7 +42,9 @@ class FiberHandler
             $response = $next($request);
             assert($response instanceof ResponseInterface || $response instanceof PromiseInterface || $response instanceof \Generator);
 
-            if ($deferred !== null) {
+            // if the next request handler suspends the fiber, the code below will assign a Deferred
+            // if the next request handler returns immediately, the fiber can terminate immediately without using a Deferred
+            if ($deferred instanceof Deferred) { // @phpstan-ignore-line
                 $deferred->resolve($response);
             }
 

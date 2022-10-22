@@ -16,6 +16,7 @@ class Container
     /** @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
+        /** @var mixed $loader explicit type check for mixed if user ignores parameter type */
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {
             throw new \TypeError(
                 'Argument #1 ($loader) must be of type array|Psr\Container\ContainerInterface, ' . (\is_object($loader) ? get_class($loader) : gettype($loader)) . ' given'
