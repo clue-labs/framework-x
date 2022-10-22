@@ -49,8 +49,10 @@ class FiberHandler
             return $response;
         });
 
+        /** @throws void because the next handler will allways be an `ErrorHandler` */
         $fiber->start();
         if ($fiber->isTerminated()) {
+            /** @throws void because fiber is known to have terminated successfully */
             return $fiber->getReturn();
         }
 

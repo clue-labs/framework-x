@@ -13,7 +13,7 @@ class Container
     /** @var array<string,object|callable():(object|scalar|null)|scalar|null>|ContainerInterface */
     private $container;
 
-    /** @var array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
+    /** @param array<string,callable():(object|scalar|null) | object | scalar | null>|ContainerInterface $loader */
     public function __construct($loader = [])
     {
         if (!\is_array($loader) && !$loader instanceof ContainerInterface) {

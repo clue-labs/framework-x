@@ -286,7 +286,7 @@ class App
         } while (true);
 
         // remove signal handlers when loop stops (if registered)
-        Loop::removeSignal(\defined('SIGINT') ? \SIGINT : 2, $f1);
+        Loop::removeSignal(\defined('SIGINT') ? \SIGINT : 2, $f1 ?? 'printf');
         Loop::removeSignal(\defined('SIGTERM') ? \SIGTERM : 15, $f2 ?? 'printf');
     }
 

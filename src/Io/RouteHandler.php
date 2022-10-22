@@ -76,7 +76,7 @@ class RouteHandler
     public function __invoke(ServerRequestInterface $request)
     {
         if ($request->getRequestTarget()[0] !== '/' && $request->getRequestTarget() !== '*') {
-            return $this->errorHandler->requestProxyUnsupported($request);
+            return $this->errorHandler->requestProxyUnsupported();
         }
 
         if ($this->routeDispatcher === null) {
@@ -84,20 +84,26 @@ class RouteHandler
         }
 
         $routeInfo = $this->routeDispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
-        switch ($routeInfo[0]) {
-            case \FastRoute\Dispatcher::NOT_FOUND:
-                return $this->errorHandler->requestNotFound($request);
-            case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                return $this->errorHandler->requestMethodNotAllowed($routeInfo[1]);
-            case \FastRoute\Dispatcher::FOUND:
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
+        assert(\is_array($routeInfo) && isset($routeInfo[0]));
 
-                foreach ($vars as $key => $value) {
-                    $request = $request->withAttribute($key, rawurldecode($value));
-                }
+        if ($routeInfo[0] === \FastRoute\Dispatcher::FOUND) {
+            $handler = $routeInfo[1];
+            $vars = $routeInfo[2];
 
-                return $handler($request);
+            foreach ($vars as $key => $value) {
+                $request = $request->withAttribute($key, rawurldecode($value));
+            }
+
+            return $handler($request);
         }
-    } // @codeCoverageIgnore
+
+        if ($routeInfo[0] === \FastRoute\Dispatcher::NOT_FOUND) {
+            return $this->errorHandler->requestNotFound();
+        }
+
+        assert($routeInfo[0] === \FastRoute\Dispatcher::METHOD_NOT_ALLOWED);
+        assert(\is_array($routeInfo[1]) && \count($routeInfo[1]) > 0);
+
+        return $this->errorHandler->requestMethodNotAllowed($routeInfo[1]);
+    }
 }
