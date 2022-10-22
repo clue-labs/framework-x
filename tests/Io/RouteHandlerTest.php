@@ -14,7 +14,7 @@ use React\Http\Message\ServerRequest;
 
 class RouteHandlerTest extends TestCase
 {
-    public function testMapRouteWithControllerAddsRouteOnRouter()
+    public function testMapRouteWithControllerAddsRouteOnRouter(): void
     {
         $controller = function () { };
 
@@ -30,7 +30,7 @@ class RouteHandlerTest extends TestCase
         $handler->map(['GET'], '/', $controller);
     }
 
-    public function testMapRouteWithMiddlewareAndControllerAddsRouteWithMiddlewareHandlerOnRouter()
+    public function testMapRouteWithMiddlewareAndControllerAddsRouteWithMiddlewareHandlerOnRouter(): void
     {
         $middleware = function () { };
         $controller = function () { };
@@ -47,7 +47,7 @@ class RouteHandlerTest extends TestCase
         $handler->map(['GET'], '/', $middleware, $controller);
     }
 
-    public function testMapRouteWithClassNameAddsRouteOnRouterWithControllerCallableFromContainer()
+    public function testMapRouteWithClassNameAddsRouteOnRouterWithControllerCallableFromContainer(): void
     {
         $controller = function () { };
 
@@ -66,7 +66,7 @@ class RouteHandlerTest extends TestCase
         $handler->map(['GET'], '/', \stdClass::class);
     }
 
-    public function testMapRouteWithContainerAndControllerAddsRouteOnRouterWithControllerOnly()
+    public function testMapRouteWithContainerAndControllerAddsRouteOnRouterWithControllerOnly(): void
     {
         $controller = function () { };
 
@@ -82,7 +82,7 @@ class RouteHandlerTest extends TestCase
         $handler->map(['GET'], '/', new Container(), $controller);
     }
 
-    public function testMapRouteWithContainerAndControllerClassNameAddsRouteOnRouterWithControllerCallableFromContainer()
+    public function testMapRouteWithContainerAndControllerClassNameAddsRouteOnRouterWithControllerCallableFromContainer(): void
     {
         $controller = function () { };
 
@@ -101,7 +101,7 @@ class RouteHandlerTest extends TestCase
         $handler->map(['GET'], '/', $container, \stdClass::class);
     }
 
-    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
+    public function testHandleRequestWithProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $request = $request->withRequestTarget('http://example.com/');
@@ -119,7 +119,7 @@ class RouteHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithConnectProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed()
+    public function testHandleRequestWithConnectProxyRequestReturnsResponseWithMessageThatProxyRequestsAreNotAllowed(): void
     {
         $request = new ServerRequest('CONNECT', 'example.com:80');
         $request = $request->withRequestTarget('example.com:80');
@@ -137,7 +137,7 @@ class RouteHandlerTest extends TestCase
         $this->assertStringContainsString("<p>Please check your settings and retry.</p>\n", (string) $response->getBody());
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandler()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandler(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
@@ -150,12 +150,13 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClass()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClass(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
 
         $controller = new class {
+            /** @var ?Response */
             public static $response;
             public function __invoke() {
                 return self::$response;
@@ -171,7 +172,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassName()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassName(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
@@ -192,7 +193,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithOptionalConstructor()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithOptionalConstructor(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
@@ -215,7 +216,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithNullableConstructor()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithNullableConstructor(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
@@ -238,7 +239,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithRequiredResponseInConstructor()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerClassNameWithRequiredResponseInConstructor(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -260,7 +261,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($controller::$response, $ret);
     }
 
-    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerWithClassNameMiddleware()
+    public function testHandleRequestWithGetRequestReturnsResponseFromMatchingHandlerWithClassNameMiddleware(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
         $response = new Response(200, [], '');
@@ -279,7 +280,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestTwiceWithGetRequestCallsSameHandlerInstanceFromMatchingHandlerClassName()
+    public function testHandleRequestTwiceWithGetRequestCallsSameHandlerInstanceFromMatchingHandlerClassName(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
@@ -300,7 +301,7 @@ class RouteHandlerTest extends TestCase
         $this->assertEquals(2, $ret);
     }
 
-    public function testHandleRequestWithGetRequestWithHttpUrlInPathReturnsResponseFromMatchingHandler()
+    public function testHandleRequestWithGetRequestWithHttpUrlInPathReturnsResponseFromMatchingHandler(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/http://localhost/');
         $response = new Response(200, [], '');
@@ -313,7 +314,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyHandler()
+    public function testHandleRequestWithOptionsAsteriskRequestReturnsResponseFromMatchingEmptyHandler(): void
     {
         $request = new ServerRequest('OPTIONS', 'http://example.com');
         $request = $request->withRequestTarget('*');
@@ -327,7 +328,7 @@ class RouteHandlerTest extends TestCase
         $this->assertSame($response, $ret);
     }
 
-    public function testHandleRequestWithContainerOnlyThrows()
+    public function testHandleRequestWithContainerOnlyThrows(): void
     {
         $request = new ServerRequest('GET', 'http://example.com/');
 
