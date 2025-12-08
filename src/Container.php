@@ -461,11 +461,15 @@ class Container
         \assert($type !== 'null' && $type !== 'mixed');
 
         return (
-            (\is_object($value) && $value instanceof $type) ||
+            (\is_object($value) && ($value instanceof $type || $type === 'object')) || // instanceof or object for PHP 7.2+
             (\is_string($value) && $type === 'string') ||
             (\is_int($value) && $type === 'int') ||
             (\is_float($value) && $type === 'float') ||
-            (\is_bool($value) && $type === 'bool')
+            (\is_bool($value) && $type === 'bool') ||
+            (\is_iterable($value) && $type === 'iterable') ||
+            (\is_callable($value) && $type === 'callable') ||
+            ($value === true && $type === 'true') || // PHP 8.2+ standalone type
+            ($value === false && $type === 'false') // PHP 8.0+ union or PHP 8.2+ standalone
         );
     }
 
