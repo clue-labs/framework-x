@@ -413,6 +413,10 @@ class Container
                 throw new \TypeError(
                     'Return value of ' . self::functionName($closure) . ' for $' . $name . ' must be of type object|string|int|float|bool|null, ' . $this->gettype($value) . ' returned'
                 );
+            } elseif ($value instanceof \Closure) {
+                throw new \TypeError(
+                    'Return value of ' . self::functionName($closure) . ' for $' . $name . ' must not be of type Closure'
+                );
             }
 
             $this->container[$name] = $value;

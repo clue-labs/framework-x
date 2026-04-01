@@ -2266,6 +2266,22 @@ class ContainerTest extends TestCase
         $container->getEnv('X_FOO');
     }
 
+    public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidClosure(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function () {
+                return function () {
+                    return 42;
+                };
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must not be of type Closure');
+        $container->getEnv('X_FOO');
+    }
+
     public function testGetEnvThrowsIfFactoryFunctionReturnsInvalidInt(): void
     {
         $container = new Container([
@@ -2807,6 +2823,22 @@ class ContainerTest extends TestCase
 
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, null returned');
+        $container->getObject(AccessLogHandler::class);
+    }
+
+    public function testGetObjectThrowsIfFactoryFunctionReturnsInvalidClosure(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            AccessLogHandler::class => function () {
+                return function () {
+                    return 42;
+                };
+            }
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Return value of {closure:' . __FILE__ . ':' . $line . '}() for FrameworkX\AccessLogHandler must be of type FrameworkX\AccessLogHandler, Closure returned');
         $container->getObject(AccessLogHandler::class);
     }
 
