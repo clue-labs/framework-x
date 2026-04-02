@@ -1925,6 +1925,69 @@ class ContainerTest extends TestCase
     }
 
     /**
+     * @requires PHP 7.2
+     */
+    public function testGetEnvReturnsStringFromFactoryFunctionWithObjectType(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (object $data) { return get_class($data); },
+            'data' => new \ArrayObject()
+        ]);
+
+        $this->assertEquals('ArrayObject', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromFactoryFunctionWithIterableType(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (iterable $items) { $s = ''; foreach ($items as $v) { $s .= $v; } return $s; },
+            'items' => new \ArrayIterator([1, 2, 3])
+        ]);
+
+        $this->assertEquals('123', $container->getEnv('X_FOO'));
+    }
+
+    public function testGetEnvReturnsStringFromFactoryFunctionWithCallableType(): void
+    {
+        $container = new Container([
+            'X_FOO' => function (callable $fn) { return $fn('alice'); },
+            'fn' => 'strtoupper'
+        ]);
+
+        $this->assertEquals('ALICE', $container->getEnv('X_FOO'));
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvReturnsStringFromFactoryFunctionWithTrueType(): void
+    {
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (true $admin) { return var_export($admin, true); };');
+        $container = new Container([
+            'X_FOO' => $fn,
+            'admin' => true
+        ]);
+
+        $this->assertEquals('true', $container->getEnv('X_FOO'));
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvReturnsStringFromFactoryFunctionWithFalseType(): void
+    {
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (false $disabled) { return var_export($disabled, true); };');
+        $container = new Container([
+            'X_FOO' => $fn,
+            'disabled' => false
+        ]);
+
+        $this->assertEquals('false', $container->getEnv('X_FOO'));
+    }
+
+    /**
      * @requires PHP 8
      */
     public function testGetEnvReturnsStringFromFactoryFunctionWithUnionType(): void
@@ -2498,6 +2561,84 @@ class ContainerTest extends TestCase
 
         $this->expectException(\TypeError::class);
         $this->expectExceptionMessage('Argument #1 ($bar) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type ?int, string given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 7.2
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsObjectTypeButWrongTypeGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (object $data) { return get_class($data); },
+            'data' => 'Alice'
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($data) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type object, string given');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsIterableTypeButWrongTypeGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (iterable $items) { $s = ''; foreach ($items as $v) { $s .= $v; } return $s; },
+            'items' => 'not-iterable'
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($items) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type iterable, string given');
+        $container->getEnv('X_FOO');
+    }
+
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsCallableTypeButWrongTypeGiven(): void
+    {
+        $line = __LINE__ + 2;
+        $container = new Container([
+            'X_FOO' => function (callable $fn) { return $fn(); },
+            'fn' => 42
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($fn) of {closure:' . __FILE__ . ':' . $line . '}() for $X_FOO must be of type callable, int given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsTrueTypeButWrongTypeGiven(): void
+    {
+        $line = __LINE__ + 2;
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (true $admin) { return var_export($admin, true); };');
+        $container = new Container([
+            'X_FOO' => $fn,
+            'admin' => false
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($admin) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO must be of type true, false given');
+        $container->getEnv('X_FOO');
+    }
+
+    /**
+     * @requires PHP 8.2
+     */
+    public function testGetEnvThrowsWhenFactoryFunctionExpectsFalseTypeButWrongTypeGiven(): void
+    {
+        $line = __LINE__ + 2;
+        // eval to avoid syntax error on PHP < 8.2
+        $fn = eval('return function (false $disabled) { return var_export($disabled, true); };');
+        $container = new Container([
+            'X_FOO' => $fn,
+            'disabled' => true
+        ]);
+
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #1 ($disabled) of {closure:' . __FILE__ . '(' . $line . ') : eval()\'d code:1}() for $X_FOO must be of type false, true given');
         $container->getEnv('X_FOO');
     }
 
